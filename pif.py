@@ -9,7 +9,7 @@ import time
 import argparse
 
 def chime(timeout):
-	# deamonise and send a pif message every 2 seconds
+	# deamonise and send a pif message at timeout rate
 	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	s.bind(('', 0))
 	s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
@@ -29,10 +29,8 @@ def search(timeout):
 	while 1:
 		try:
 			if select.select([s], [], [], 1)[0]:
-				#conn, addr = s.accept()
-				#msg = s.recv(8192)
-				msg, addr = s.recvfrom(8192)
-				if msg == 'pif':
+				msg, addr = s.recvfrom(32)
+				if msg == MSG:
 					print "pif found: " + str(addr[0])
 			now = time.time()
 			if now > end_time:
