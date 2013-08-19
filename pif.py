@@ -2,6 +2,7 @@
 
 PORT = 50007
 MSG = 'pif'
+SO_BINDTODEVICE = 25 # not in python socket lib for some reason
 
 import socket
 import select
@@ -9,9 +10,11 @@ import time
 import argparse
 from daemon import Daemon
 
-def chime(timeout):
+def chime(timeout, iface=None):
 	# deamonise and send a pif message at timeout rate
 	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+	if iface != None:
+		s.setsockopt(socket.SOL_SOCKET, SO_BINDTODEVICE, iface)
 	s.bind(('', 0))
 	s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
 	while True:
@@ -40,11 +43,13 @@ def daemon(cmd, timeout):
 	print "success"
 	return True
 
-def search(timeout):
+def search(timeout, iface=None):
 	# look for pif messages and print out the devices found
 	print "seraching for pif devices"
 	end_time = time.time() + timeout
 	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+	if iface != None:
+		s.setsockopt(socket.SOL_SOCKET, SO_BINDTODEVICE, iface)
 	s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 	s.bind(('', PORT))
 	s.setblocking(0)
@@ -66,18 +71,23 @@ def main():
 	parser.add_argument('-s', '--search', action='store_true', help='search for pif devices')
 	parser.add_argument('-c', '--chime', action='store_true', help='broadcast pif message with ipaddress at regular intervals')
 	parser.add_argument('-d', '--daemon', nargs=1, help='[start|stop|restart] chime processes as a deamon')
+	parser.add_argument('-i', '--interface', nargs=1, help='interface to listen or broadcast too')
 	args = parser.parse_args()
 	timeout = 2
+	iface = None
 	if args.timeout:
 		timeout = int(args.timeout)
+	if args.interface:
+		iface = args.interface[0]
+		print "using interface " + iface
 	if args.search:
-		search(timeout)
+		search(timeout, iface)
 	elif args.daemon:
 		if not daemon(args.daemon[0], timeout):
 			print "error: daemon options are [start|stop|restart]"
 			parser.print_help()
 	elif args.chime:
-		chime(timeout)
+		chime(timeout, iface)
 	else:
 		print "error: no option specified"
 		parser.print_help()
