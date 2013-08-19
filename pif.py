@@ -61,7 +61,7 @@ def search(timeout):
 			break
 
 def main():
-	parser = argparse.ArgumentParser('pif, raspberrypi find util')
+	parser = argparse.ArgumentParser('pif, broadcast search tool')
 	parser.add_argument('-t', '--timeout', help='timeout for the operation, for search this is the time to search, for chime this is the delay between chimes')
 	parser.add_argument('-s', '--search', action='store_true', help='search for pif devices')
 	parser.add_argument('-c', '--chime', action='store_true', help='broadcast pif message with ipaddress at regular intervals')
