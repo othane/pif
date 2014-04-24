@@ -45,9 +45,10 @@ def daemon(cmd, timeout, msg):
 	print "success"
 	return True
 
-def search(timeout, iface=None):
+def search(timeout, iface=None, console=True):
 	# look for pif messages and print out the devices found
-	print "seraching for pif devices"
+	if console:
+		print "searching for pif devices"
 	end_time = time.time() + timeout
 	s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 	if iface != None:
@@ -55,21 +56,27 @@ def search(timeout, iface=None):
 	s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 	s.bind(('', PORT))
 	s.setblocking(0)
+	found = {}
 	while 1:
 		try:
 			if select.select([s], [], [], 1)[0]:
-				msg, addr = s.recvfrom(32)
+				msg, addr = s.recvfrom(256)
 				if MSG in msg:
 					msg = msg.split(MSG)
 					if len(msg) > 1 and len(msg[1]) > 0:
-						print "pif found: %s: %s" % (str(addr[0]), msg[1])
+						if console and (str(addr[0]) not in found):
+							print "pif found: %s: %s" % (str(addr[0]), msg[1])
+						found[str(addr[0])] = msg[1]
 					else:
-						print "pif found: %s" % (str(addr[0]))
+						if console and (str(addr[0]) not in found):
+							print "pif found: %s" % (str(addr[0]))
+						found[str(addr[0])] = ""
 			now = time.time()
 			if now > end_time:
 				break
 		except KeyboardInterrupt:
 			break
+	return found
 
 def main():
 	parser = argparse.ArgumentParser('pif, broadcast search tool')
