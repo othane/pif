@@ -62,7 +62,7 @@ def search(timeout, iface=None, console=True):
 	while 1:
 		try:
 			if select.select([s], [], [], 1)[0]:
-				msg, addr = s.recvfrom(256)
+				msg, addr = s.recvfrom(5*1024)
 				if MSG in msg:
 					msg = msg.split(MSG)
 					if len(msg) > 1 and len(msg[1]) > 0:
