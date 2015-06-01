@@ -1,0 +1,62 @@
+#! /bin/bash
+### BEGIN INIT INFO
+# Provides: pif
+# Required-Start: $network $local_fs $remote_fs $all
+# Required-Stop:
+# Default-Start: 2 3 4 5
+# Default-Stop:
+# Short-Description: start pif (broadcast network search util)
+### END INIT INFO
+
+do_start() {
+	# sort out the pif message
+	shift
+	if [ -z $@ ]; then
+		# not message given on the command line 
+		if [ -z $MESSAGE ]; then
+			# default message
+			MESSAGE=`uname -n`
+		fi
+	else
+		# use message from the command line
+		MESSAGE=$@
+	fi
+
+	logger "starting pif broadcasting $MESSAGE"
+	/usr/bin/pif -c -m "$MESSAGE" -d start
+}
+
+do_stop() {
+	# kill the loop first otherwise pif.py will be killed and revived by the loop
+	pif -d stop
+	sleep 1
+
+	# kill just incase this wont stop
+	pid=`pgrep -f pif`
+	if [ $? == 0 ]; then
+		kill -9 $pid
+		pid=`pgrep -f pif`
+		if [ $? == 0 ]; then
+			echo "unable to stop pif [$(pid)]"
+		fi
+	fi
+}
+
+case "$1" in
+	start|"")
+		do_start
+		;;
+	restart|reload|force-reload)
+		do_stop
+		do_start
+		;;
+	stop)
+		do_stop
+		;;
+	*)
+		echo "Unknown option"
+		echo "Usage: pif [start|stop|restart|reload]"
+		exit 3
+		;;
+esac
+
